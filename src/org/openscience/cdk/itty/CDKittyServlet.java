@@ -20,7 +20,8 @@ import com.google.wave.api.Wavelet;
 @SuppressWarnings("serial")
 public class CDKittyServlet extends AbstractRobotServlet {
 
-	Pattern pattern = Pattern.compile("mwOf:\\w[\\w|\\d]+");
+	Pattern mwPattern = Pattern.compile("mwOf:\\w[\\w|\\d]+\\s");
+	Pattern htmlPattern = Pattern.compile("htmlOf:\\w[\\w|\\d]+\\s");
 
 	@Override
 	public void processEvents(RobotMessageBundle bundle) {
@@ -29,8 +30,13 @@ public class CDKittyServlet extends AbstractRobotServlet {
 	    if (bundle.wasSelfAdded()) {
 	      Blip blip = wavelet.appendBlip();
 	      TextView textView = blip.getDocument();
-	      textView.append("Prefix a molecular formula with 'mwOf:' to gets it mass." +
-	    		  "If the formula is not recognized an error will be thrown.");
+	      textView.append("Prefix a molecular formula with a command to gets the property. " +
+	    		  "If the formula is not recognized 0.0 will be returned; the property " +
+	    		  "is not calculated until a space is given after the formula. " +
+	    		  "<table>" +
+	    		  "  <tr><td>mwOf:</td><td></td>calculate the molecular weight</tr>" +
+	    		  "  <tr><td>htmlOf:</td><td></td>return the formula as HTML</tr>" +
+	    		  "</table>");
 	    }
 	            
 	    for (Event e: bundle.getEvents()) {
@@ -39,33 +45,63 @@ public class CDKittyServlet extends AbstractRobotServlet {
 	    	  Blip blip = e.getBlip();
 	    	  if (!blip.getCreator().equals("CDKitty")) {
 	    		  TextView textView = blip.getDocument();
-	    		  while (true) {
-	    			  Matcher matcher = pattern.matcher(textView.getText());
-	    			  if (matcher.find()) {
-	    				  String match = matcher.group();
-	    				  int start = matcher.start();
-	    				  int end = matcher.end();
-	    				  
-	    				  String formula = match.substring(5);
-	    				  IMolecularFormula mf = MolecularFormulaManipulator.getMolecularFormula(
-	    					  formula,
-	    					  NoNotificationChemObjectBuilder.getInstance()
-	    			      );
-	    				  
-	    				  textView.replace(
-	    				      new Range(start, end),
-	    				      "" + AtomContainerManipulator.getNaturalExactMass(
-	    				    	  MolecularFormulaManipulator.getAtomContainer(mf)
-	    				      )
-	    				  );
-	    			  } else {
-	    				  // OK, nothing more found, so return
-	    				  return;
-	    			  }
-	    		  }
+	    		  // apply all known commands
+	    		  calcMw(textView); // mfOf:
+	    		  returnHTML(textView); // htmlOf:
 	    	  }
 	      }
 	    }
 	}
+
+	private void calcMw(TextView textView) {
+		while (true) {
+			Matcher matcher = mwPattern.matcher(textView.getText());
+			if (matcher.find()) {
+				String match = matcher.group();
+				int start = matcher.start();
+				int end = matcher.end();
+
+				String formula = match.substring(5).trim();
+				IMolecularFormula mf = MolecularFormulaManipulator.getMolecularFormula(
+					formula,
+					NoNotificationChemObjectBuilder.getInstance()
+				);
+
+				textView.replace(
+					new Range(start, end),
+					"" + AtomContainerManipulator.getNaturalExactMass(
+						MolecularFormulaManipulator.getAtomContainer(mf)
+					)
+				);
+			} else {
+				// OK, nothing more found, so return
+				return;
+			}
+		}
+	}
 	
+	private void returnHTML(TextView textView) {
+		while (true) {
+			Matcher matcher = htmlPattern.matcher(textView.getText());
+			if (matcher.find()) {
+				String match = matcher.group();
+				int start = matcher.start();
+				int end = matcher.end();
+
+				String formula = match.substring(5).trim();
+				IMolecularFormula mf = MolecularFormulaManipulator.getMolecularFormula(
+					formula,
+					NoNotificationChemObjectBuilder.getInstance()
+				);
+
+				textView.replace(
+					new Range(start, end),
+					MolecularFormulaManipulator.getHTML(mf)
+				);
+			} else {
+				// OK, nothing more found, so return
+				return;
+			}
+		}
+	}
 }

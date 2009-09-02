@@ -33,10 +33,9 @@ public class CDKittyServlet extends AbstractRobotServlet {
 	      textView.append("Prefix a molecular formula with a command to gets the property. " +
 	    		  "If the formula is not recognized 0.0 will be returned; the property " +
 	    		  "is not calculated until a space is given after the formula. " +
-	    		  "<table>" +
-	    		  "  <tr><td>mwOf:</td><td></td>calculate the molecular weight</tr>" +
-	    		  "  <tr><td>htmlOf:</td><td></td>return the formula as HTML</tr>" +
-	    		  "</table>");
+	    		  "The available commands: " +
+	    		  "mwOf: calculate the molecular weight;" +
+	    		  "htmlOf: return the formula as HTML.");
 	    }
 	            
 	    for (Event e: bundle.getEvents()) {
@@ -47,7 +46,7 @@ public class CDKittyServlet extends AbstractRobotServlet {
 	    		  TextView textView = blip.getDocument();
 	    		  // apply all known commands
 	    		  calcMw(textView); // mfOf:
-	    		  returnHTML(textView); // htmlOf:
+//	    		  returnHTML(textView); // htmlOf:
 	    	  }
 	      }
 	    }
